@@ -1,8 +1,8 @@
-const Farmer = require('../models/Farmer');
+const Crafter = require('../models/Crafter');
 const Consumer = require('../models/Consumer');
 module.exports = {
-    uniqueCheckMobileFarmer: async (value) => {
-        const user = await Farmer.findOne({raw: true, where: { mobileNo: value }});
+    uniqueCheckMobileCrafter: async (value) => {
+        const user = await Crafter.findOne({raw: true, where: { mobileNo: value }});
         if (user) {
             throw new Error("Mobile No already exists");
         }

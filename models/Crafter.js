@@ -1,6 +1,6 @@
 const {DataTypes}=require("sequelize");
 const {conn}=require('../db');
-const Farmer=conn.define("Farmer",{
+const Crafter=conn.define("Crafter",{
     id:{
         type:DataTypes.BIGINT,
         primaryKey: true,
@@ -38,5 +38,5 @@ const Farmer=conn.define("Farmer",{
 
 
 
-},{timestamps:true,tableName:"farmers"});
-module.exports=Farmer;
+},{timestamps:true,tableName:"crafters"});
+module.exports=Crafter;

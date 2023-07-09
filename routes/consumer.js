@@ -26,7 +26,7 @@ function checkFileType(file, cb, type) {
     }
 }
 var storage = multer.diskStorage({
-    destination: './static/consumer',
+    destination: './static/uploads/consumer',
     filename: function (req, file, cb) {
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
     }

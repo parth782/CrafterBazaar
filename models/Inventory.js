@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { conn } = require('../db');
-const Farmer=require('./Farmer');
+const Crafter=require('./Crafter');
 const Inventory = conn.define("Inventory", {
     id: {
         type: DataTypes.BIGINT,
@@ -19,11 +19,11 @@ const Inventory = conn.define("Inventory", {
     unit: {
         type: DataTypes.BIGINT,
     },
-    farmerId: {
+     crafterId: {
         type: DataTypes.BIGINT,
         allowNull: false,
         refernces: {
-            model: "Farmer",
+            model: "Crafter",
             key: "id"
         }
     },
@@ -41,5 +41,5 @@ const Inventory = conn.define("Inventory", {
     }
 
 }, { timestamps: true, tableName: "inventories" });
-Inventory.belongsTo(Farmer, { foreignKey: "farmerId" });
+Inventory.belongsTo(Crafter, { foreignKey: "crafterId" });
 module.exports = Inventory;

@@ -3,7 +3,7 @@ const router = express.Router();
 const { ensureConsumerAuthenticated } = require("../middleware/auth");
 const Order = require('../models/Order');
 const Consumer = require('../models/Consumer');
-const Farmer = require('../models/Farmer');
+const Crafter = require('../models/Crafter');
 const { Sequelize } = require("sequelize");
 const Cart = require("../models/Cart");
 
@@ -28,7 +28,7 @@ router.post('/', ensureConsumerAuthenticated, async (req, res) => {
         });
         await order.save();
         await Consumer.update({ money: Sequelize.literal(`money-${total}`) }, { where: { id: req.user.id } });
-        await Farmer.update({ money: Sequelize.literal(`money+${total}`) }, { where: { id: inv.farmerId } });
+        await Crafter.update({ money: Sequelize.literal(`money+${total}`) }, { where: { id: inv.crafterId } });
         await Order.update({ status: "paid" }, { where: { id: order.id } });
         await Cart.destroy({ where: { consumerId: req.user.id } });
         return res.status(200).json({ status: "success", msg: "Order Placed Successfully" });
@@ -45,7 +45,7 @@ router.get("/", ensureConsumerAuthenticated, async (req, res) => {
 
         const orders = await Order.findAll({ nest: true, raw: true, include: ["Inventory", "Consumer"], where: { consumerId: req.user.id } });
         orders.forEach((item, index) => {
-            delete item.Farmer.mobileNo;
+            delete item.Crafter.mobileNo;
         })
         return res.status(200).json({ status: "success", orders: orders });
 

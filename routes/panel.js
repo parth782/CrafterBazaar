@@ -5,7 +5,7 @@ const Panel = require("../models/Panel");
 const jwt = require("jsonwebtoken");
 
 // IMPORTING ALL MODELS
-const Farmer = require('./models/Farmer');
+const Crafter = require('./models/Crafter');
 const Inventory = require('./models/Inventory');
 const Consumer = require('./models/Consumer');
 const Order = require('./models/Order');
@@ -38,10 +38,10 @@ router.post("/", body("email").isEmail(), body("password").isLength({ min: 6 }),
 });
 
 // FOR FETCHING ALL FARMERS
-router.get("/farmers", ensureAdminAuthenticated, async (req, res) => {
+router.get("/crafters", ensureAdminAuthenticated, async (req, res) => {
     try {
-        const farmers = await Farmer.findAll();
-        return res.status(200).json({ status: "success", farmers: farmers });
+        const crafters = await Crafter.findAll();
+        return res.status(200).json({ status: "success", crafters: crafters });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ msg: "Some Error Occured" });
@@ -124,13 +124,13 @@ router.get("/consumer/:id", ensureAdminAuthenticated, async (req, res) => {
 })
 
 // FOR FETCHING INFO OF PARTICULAR FARMER
-router.get("/farmer/:id", ensureAdminAuthenticated, async (req, res) => {
+router.get("/crafter/:id", ensureAdminAuthenticated, async (req, res) => {
     try {
-        const farmer = await Farmer.findOne({ where: { id: req.params.id } });
-        if (!farmer) {
-            return res.status(400).json({ msg: "No Such Farmer Found" });
+        const crafter = await Crafter.findOne({ where: { id: req.params.id } });
+        if (!crafter) {
+            return res.status(400).json({ msg: "No Such Crafter Found" });
         }
-        return res.status(200).json({ status: "success", farmer: farmer });
+        return res.status(200).json({ status: "success", crafter: crafter });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ msg: "Some Error Occured" });
@@ -152,11 +152,11 @@ router.get("/consumer/:id/orders", ensureAdminAuthenticated, async (req, res) =>
 })
 
 // FOR FETCHING INVENTORY OF PARTICULAR FARMER
-router.get("/farmer/:id/inventory", ensureAdminAuthenticated, async (req, res) => {
+router.get("/crafter/:id/inventory", ensureAdminAuthenticated, async (req, res) => {
     try {
-        const inventory = await Inventory.findAll({ where: { farmerId: req.params.id } });
+        const inventory = await Inventory.findAll({ where: { crafterId: req.params.id } });
         if (!inventory) {
-            return res.status(400).json({ msg: "No Such Farmer Found" });
+            return res.status(400).json({ msg: "No Such Crafter Found" });
         }
         return res.status(200).json({ status: "success", inventory: inventory });
     } catch (err) {
