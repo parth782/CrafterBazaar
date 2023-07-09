@@ -1,0 +1,26 @@
+{
+  "name": "crafterbazaarbackend",
+  "version": "1.0.0",
+  "description": "Handicraft platforms typically allow artisans to create profiles that highlight their skills, background, and the types of crafts they specialize in. These profiles often include images of their work, personal stories, and information about their creative process.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js",
+    "start": "node app.js"
+  },
+  "author": "Parth Gupta",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.10.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.31.1",
+    "twilio": "^3.83.0"
+  }
+}
