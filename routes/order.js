@@ -40,6 +40,7 @@ router.post('/', ensureConsumerAuthenticated, async (req, res) => {
     }
 })
 
+
 router.get("/", ensureConsumerAuthenticated, async (req, res) => {
     try {
 

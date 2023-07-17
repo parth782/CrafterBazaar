@@ -35,8 +35,8 @@ const Cart = conn.define("Cart", {
 
 
 }, { timestamps: true, tableName: "carts" });
-Cart.hasOne(Inventory, { foreignKey: "inventoryId" });
-Cart.hasOne(Consumer, { foreignKey: "consumerId" });
+Cart.belongsTo(Inventory, { foreignKey: "inventoryId" });
+Cart.belongsTo(Consumer, { foreignKey: "consumerId" });
 
 
 module.exports = Cart;

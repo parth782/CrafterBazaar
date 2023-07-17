@@ -46,20 +46,14 @@ var upload = multer({
     }
 }).single("imgFile");
 
-
-
-
-
-
-
-
+// FOR EDITING CRAFTER PROFILE
 router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 }).withMessage("Name must be atleast 3 characters long"), body('mobileNo').isLength({ min: 10 }).withMessage("Mobile number must be 10 digits long"), body('city').isLength({ min: 3 }).withMessage("City must be atleast 3 charcters long"), body('district').isLength({ min: 3 }).withMessage("District must be three charcters long"),
     async (req, res) => {
 
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({ errors: errors.array() });
+                return res.status(422).json({ errors: errors.array()[0].msg });
             }
             const { name, mobileNo, city, district, bloodGroup } = req.body;
             const record = await Crafter.findOne({ raw: true, where: { mobileNo: mobileNo, id: { [Op.ne]: req.user.id } } });
@@ -84,7 +78,9 @@ router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 
 
 
     })
-router.get("/edit", ensureCraterAuthenticated, async (req, res) => {
+
+//FETCHING DATA FOR EDIT 
+router.get("/edit", ensureCrafterAuthenticated, async (req, res) => {
     try {
         console.log(req.user.id);
         const record = await Crafter.findOne({ raw: true, where: { id: req.user.id } });
@@ -96,13 +92,14 @@ router.get("/edit", ensureCraterAuthenticated, async (req, res) => {
     }
 })
 
+// FOR CRAFTER LOGIN VIA OTP
 router.post('/login', body("mobileNo").isLength({ min: 10 }).withMessage("Mobile No must be of length 10"), async (req, res) => {
 
     try {
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array()[0].msg });
         }
         const status = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
             .verifications
@@ -119,12 +116,13 @@ router.post('/login', body("mobileNo").isLength({ min: 10 }).withMessage("Mobile
     }
 });
 
+// FOR VERIFICTION OF OTP
 router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP must be of length 6"), body("mobileNo").isLength({ min: 10 }).withMessage("Mobile No must be of length 10"), async (req, res) => {
 
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array()[0].msg });
         }
         const temp = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
             .verificationChecks
@@ -160,15 +158,16 @@ router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP mus
     }
 })
 
+// FOR IMAGE UPLOADING OF CRAFTER
 router.post("/img", ensureCrafterAuthenticated, async (req, res) => {
     upload(req, res, async (err) => {
         if (err) {
             console.log(err);
-            return res.status(400).json({ errors: "Error in uploading image" });
+            return res.status(422).json({ msg: "Error in uploading image" });
         }
         else {
             if (req.file == undefined) {
-                return res.status(400).json({ errors: "No file Selected" });
+                return res.status(422).json({ msg: "No file Selected" });
             }
             else {
                 const crafter = await Crafter.findOne({ raw: true, where: { id: req.user.id } });

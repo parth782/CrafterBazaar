@@ -39,4 +39,5 @@ const Crafter=conn.define("Crafter",{
 
 
 },{timestamps:true,tableName:"crafters"});
-module.exports=Crafter;
+
+module.exports = Crafter;

@@ -23,7 +23,7 @@ const Panel = conn.define("Panel", {
         allowNull: false
     },
     description: {
-        type: DataTypes.Text,
+        type: DataTypes.TEXT,
         allowNull: false
     },
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const { ensureCrafterAuthenticated } = require("../middleware/auth");
 const Inventory = require('../models/Inventory');
 var multer = require("multer");
+const { body, validationResult } = require("express-validator");
 var path = require("path");
 var fs = require("fs");
 const Crafter = require("../models/Crafter");
@@ -34,8 +35,9 @@ var upload = multer({
     limits: { fileSize: 10000000000 },
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb, /jpeg|jpg|png|gif/);
-    }
-}).single("imgFile");
+    },
+
+});
 
 // DELETING FILES ON ERROR
 async function delete_on_err(path) {
@@ -58,7 +60,7 @@ router.get("/all", async (req, res) => {
         return res.status(200).json({ status: "success", inventory: inventory });
     } catch (err) {
         console.error(err.message);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send({ msg: "Internal Server Error" });
     }
 })
 
@@ -70,7 +72,7 @@ router.get("/", ensureCrafterAuthenticated, async (req, res) => {
         return res.status(200).json({ status: "success", inventory: inventory });
     } catch (err) {
         console.error(err.message);
-        return res.status(500).send("Internal Server Error");
+        return res.status(500).send({ msg: "Internal Server Error" });
     }
 });
 
@@ -81,7 +83,7 @@ router.get("/edit/:id", ensureCrafterAuthenticated, async (req, res) => {
         return res.status(200).json({ status: "success", inventory: inventory });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send({ msg: "Internal Server Error" });
     }
 });
 
@@ -92,141 +94,114 @@ router.delete("/delete/:id", ensureCrafterAuthenticated, async (req, res) => {
         return res.status(200).json({ status: "success", msg: "Record Deleted Successfully" });
     } catch (err) {
         console.error(err.message);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send({ msg: "Internal Server Error" });
     }
 });
 
 // ADD DATA
-router.post("/", ensureCrafterAuthenticated, async (req, res) => {
+router.post("/", ensureCrafterAuthenticated, upload.single("imgFile"), body("name").isLength({ min: 3 }).withMessage("must be at least 3 characters"), body("quantity").isInt({ min: 1 }).withMessage("Minimum 1 quantity should be there"), body("description").isLength({ min: 10 }).withMessage("must be at least 10 characters"), body("price").isFloat({ min: 100 }).withMessage("Minimum Price must be 100"), async (req, res) => {
 
-    // UPLOAD FILE
-    upload(req, res, async (err) => {
-        if (err) {
+    // Check for MulterError
+    if (req.fileValidationError instanceof multer.MulterError) {
+        if (req.fileValidationError.code === 'LIMIT_FILE_SIZE') {
+            return res.status(422).json({ msg: 'File size exceeded' });
+        }
+        // Handle other multer errors if needed
+        return res.status(422).json({ msg: 'File upload error' });
+    } else if (req.fileValidationError) {
+        // Handle other validation errors if needed
+        return res.status(422).json({ msg: 'Validation error' });
+    }
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
             if (req.file != undefined) {
                 await delete_on_err(req.file.filename);
             }
-            console.log(err);
-            return res.status(500).json({ msg: "Some Error Occured1" });
+            return res.status(422).json({ msg: errors.array()[0].msg });
         }
-        else {
-
-            try {
-
-
-                const { name, quantity, pricePerUnit, unit, description } = req.body;
-                if (name.length < 3) {
-                    if (req.file != undefined) {
-                        await delete_on_err(req.file.filename);
-                    }
-                    return res.status(200).json({ msg: "Name should contain 3 letters" });
-                }
-                else if (quantity < 1) {
-                    if (req.file != undefined) {
-                        await delete_on_err(req.file.filename);
-                    }
-                    return res.status(200).json({ msg: "Quantity should not be zero" });
-                }
-                else if (unit < 1) {
-                    if (req.file != undefined) {
-                        await delete_on_err(req.file.filename);
-                    }
-                    return res.status(200).json({ msg: "Unit should not be zero" });
-                }
-                else if (pricePerUnit < 1) {
-                    if (req.file != undefined) {
-                        await delete_on_err(req.file.filename);
-                    }
-                    return res.status(200).json({ msg: "PricePerUnit should not be zero" });
-                }
-
-                const inventory = await Inventory.create({
-                    name: name,
-                    quantity: quantity,
-                    pricePerUnit: pricePerUnit,
-                    unit: unit,
-                    crafterId: req.user.id,
-                    description: description,
-                    imgFile: req.file != undefined ? req.file.filename : null,
-                });
-                await inventory.save();
-                return res.status(200).json({ status: "success", msg: "Record Added Successfully" });
-            } catch (err) {
-                if (req.file != undefined) {
-                    await delete_on_err(req.file.filename);
-                }
-                console.error(err.message);
-                res.status(500).send("Internal Server Error");
-            }
+        const { name, quantity, price, description } = req.body;
+        const inventory = await Inventory.create({
+            name: name,
+            quantity: quantity,
+            price: price,
+            crafterId: req.user.id,
+            description: description,
+            imgFile: req.file != undefined ? req.file.filename : null,
+        });
+        await inventory.save();
+        return res.status(200).json({ status: "success", msg: "Record Added Successfully" });
+    } catch (err) {
+        if (req.file != undefined) {
+            await delete_on_err(req.file.filename);
         }
-    })
+        console.error(err.message);
+        res.status(500).send("Internal Server Error");
+    }
+
+
 
 })
 
 // EDIT DATA FOR INVENTORY
-router.post("/edit/:id", ensureCrafterAuthenticated, async (req, res) => {
+router.post("/edit/:id", ensureCrafterAuthenticated, body("name").isLength({ min: 3 }).withMessage("must be at least 3 characters"), body("quantity").isInt({ min: 1 }).withMessage("Minimum 1 quantity should be there"), body("description").isLength({ min: 10 }).withMessage("must be at least 10 characters"), body("price").isFloat({ min: 100 }).withMessage("Minimum Price must be 100"), async (req, res) => {
 
-    // FUNCTION FOR UPLOADING 
-    upload(req, res, async (err) => {
-
-        if (err) {
-            if (req.file != undefined) {
-                await delete_on_err(req.file.filename);
-            }
-            return res.status(500).json({ msg: "Some Error Occured" });
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(422).json({ msg: errors.array()[0].msg });
         }
+        const { name, quantity, price, description } = req.body;
 
-        try {
-            const { name, quantity, pricePerUnit, unit, description } = req.body;
-            if (name.length < 3) {
-                if (req.file != undefined) {
-                    await delete_on_err(req.file.filename);
-                }
-                return res.status(200).json({ msg: "Name should contain 3 letters" });
-            }
-            else if (quantity < 1) {
-                if (req.file != undefined) {
-                    await delete_on_err(req.file.filename);
-                }
-                return res.status(200).json({ msg: "Quantity should not be zero" });
-            }
-            else if (unit < 1) {
-                if (req.file != undefined) {
-                    await delete_on_err(req.file.filename);
-                }
-                return res.status(200).json({ msg: "Unit should not be zero" });
-            }
-            else if (pricePerUnit < 1) {
-                if (req.file != undefined) {
-                    await delete_on_err(req.file.filename);
-                }
-                return res.status(200).json({ msg: "PricePerUnit should not be zero" });
-            }
-            const record = await Inventory.findOne({ raw: true, where: { id: req.params.id, crafterId: req.user.id } });
+        await Inventory.update({
+            name: name,
+            quantity: quantity,
+            price: price,
+            description: description,
+        }, { where: { id: req.params.id, crafterId: req.user.id } });
 
-            await Inventory.update({
-                name: name,
-                quantity: quantity,
-                pricePerUnit: pricePerUnit,
-                unit: unit,
-                description: description,
-                imgFile: req.file != undefined ? req.file.filename : record.imgFile,
-            }, { where: { id: req.params.id, crafterId: req.user.id } });
-            if (req.file != undefined) {
-                await delete_on_err(record.imgFile);
-            }
-            return res.status(200).json({ status: "success", msg: "Record Updated Successfully" });
-        } catch (err) {
-            if (req.file != undefined) {
-                await delete_on_err(req.file.filename);
-            }
-            console.error(err.message);
-            res.status(500).send("Internal Server Error");
-        }
+        return res.status(200).json({ status: "success", msg: "Record Updated Successfully" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ msg: "Internal Server Error" });
+    }
 
-    })
+
 
 })
 
-// ORDER APIS
+// INVENTORY MAIN IMAGE UPLOAD
+router.post("/upload", ensureCrafterAuthenticated, upload.single("imgFile"), async (req, res) => {
+    // Check for MulterError
+    if (req.fileValidationError instanceof multer.MulterError) {
+        if (req.fileValidationError.code === 'LIMIT_FILE_SIZE') {
+            return res.status(422).json({ msg: 'File size exceeded' });
+        }
+        // Handle other multer errors if needed
+        return res.status(422).json({ msg: 'File upload error' });
+    } else if (req.fileValidationError) {
+        // Handle other validation errors if needed
+        return res.status(422).json({ msg: 'Validation error' });
+    }
+
+    try {
+        const record = await Inventory.findOne({ raw: true, where: { id: req.header("invId"), crafterId: req.user.id } });
+        await Inventory.update({
+            imgFile: req.file != undefined ? req.file.filename : record.imgFile,
+        }, { where: { id: req.header("invId"), crafterId: req.user.id } });
+        if (req.file != undefined) {
+            await delete_on_err(record.imgFile);
+        }
+        return res.status(200).json({ status: "success", msg: "Record Updated Successfully" });
+    } catch (err) {
+        if (req.file != undefined) {
+            await delete_on_err(req.file.filename);
+        }
+        console.error(err.message);
+        res.status(500).send({ msg: "Internal Server Error" });
+    }
+})
+
+
 
 module.exports = router;

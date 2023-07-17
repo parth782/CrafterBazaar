@@ -5,10 +5,10 @@ const Panel = require("../models/Panel");
 const jwt = require("jsonwebtoken");
 
 // IMPORTING ALL MODELS
-const Crafter = require('./models/Crafter');
-const Inventory = require('./models/Inventory');
-const Consumer = require('./models/Consumer');
-const Order = require('./models/Order');
+const Crafter = require('../models/Crafter');
+const Inventory = require('../models/Inventory');
+const Consumer = require('../models/Consumer');
+const Order = require('../models/Order');
 const { ensureAdminAuthenticated } = require("../middleware/auth");
 
 // FOR LOGIN OF ADMIN
@@ -16,7 +16,7 @@ router.post("/", body("email").isEmail(), body("password").isLength({ min: 6 }),
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array()[0].msg });
         }
         const { email, password } = req.body;
         const panel = await Panel.findOne({ raw: true, where: { email: email } });

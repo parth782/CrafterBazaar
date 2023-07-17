@@ -46,7 +46,7 @@ router.post('/login', body("mobileNo").isLength({ min: 10 }).withMessage("Mobile
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array()[0].msg });
         }
         const status = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
             .verifications
@@ -68,7 +68,7 @@ router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP mus
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(422).json({ errors: errors.array()[0].msg });
         }
         const temp = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
             .verificationChecks
@@ -108,7 +108,7 @@ router.post("/edit", ensureConsumerAuthenticated, body('name').isLength({ min: 1
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({ errors: errors.array() });
+                return res.status(422).json({ errors: errors.array()[0].msg });
             }
             const { name, mobileNo, city, district, bloodGroup } = req.body;
             const record = await Consumer.findOne({ raw: true, where: { mobileNo: mobileNo, id: { [Op.ne]: req.user.id } } });

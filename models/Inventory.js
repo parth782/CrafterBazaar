@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { conn } = require('../db');
-const Crafter=require('./Crafter');
+const Crafter = require('./Crafter');
 const Inventory = conn.define("Inventory", {
     id: {
         type: DataTypes.BIGINT,
@@ -12,14 +12,13 @@ const Inventory = conn.define("Inventory", {
     },
     quantity: {
         type: DataTypes.BIGINT,
+        defaultValue: 0
     },
-    pricePerUnit: {
-        type: DataTypes.BIGINT,
+    price: {
+        type: DataTypes.DOUBLE,
+        defaultValue: 0
     },
-    unit: {
-        type: DataTypes.BIGINT,
-    },
-     crafterId: {
+    crafterId: {
         type: DataTypes.BIGINT,
         allowNull: false,
         refernces: {
@@ -27,17 +26,17 @@ const Inventory = conn.define("Inventory", {
             key: "id"
         }
     },
-    isDeleted:{
-        type:DataTypes.BOOLEAN,
-        defaultValue:false
+    isDeleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    imgFile:{
-        type:DataTypes.STRING,
-        allowNull:true
+    imgFile: {
+        type: DataTypes.STRING,
+        allowNull: true
     },
-    description:{
-        type:DataTypes.TEXT,
-        allowNull:true
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 
 }, { timestamps: true, tableName: "inventories" });
