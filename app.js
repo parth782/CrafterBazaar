@@ -29,7 +29,7 @@ app.use('/api/admin', require('./routes/panel'));
 app.get("/", function (req, res) {
     res.status(200).send({
         uptime: process.uptime(),
-        message: 'Welcome to KrishiMarket',
+        message: 'Welcome to Crafters Bazaar',
         timestamp: Date.now(),
 
     });
