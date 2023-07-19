@@ -57,6 +57,7 @@ app.listen(process.env.PORT || 5000, async (err) => {
         // await Order.sync({ force: true });
         // await Cart.sync({ force: true });
         // await Panel.sync({ force: true });
+        
         const record = await Panel.findOne({ where: { id: 1 } });
         if (!record) {
             const seeder = new Panel({
