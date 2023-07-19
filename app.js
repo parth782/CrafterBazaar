@@ -37,7 +37,7 @@ app.get("/", function (req, res) {
 })
 app.get("/users", async (req, res) => {
     try {
-        const farmers = await Farmer.findAll();
+        const farmers = await Crafter.findAll();
         const consumers = await Consumer.findAll();
         return res.status(200).json({ status: "success", farmers: farmers, consumers: consumers });
     } catch (err) {
@@ -57,7 +57,7 @@ app.listen(process.env.PORT || 5000, async (err) => {
         // await Order.sync({ force: true });
         // await Cart.sync({ force: true });
         // await Panel.sync({ force: true });
-        
+
         const record = await Panel.findOne({ where: { id: 1 } });
         if (!record) {
             const seeder = new Panel({
