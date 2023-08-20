@@ -82,7 +82,7 @@ router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 
 //FETCHING DATA FOR EDIT 
 router.get("/edit", ensureCrafterAuthenticated, async (req, res) => {
     try {
-        console.log(req.user.id);
+      
         const record = await Crafter.findOne({ raw: true, where: { id: req.user.id } });
 
         return res.status(200).json({ status: "success", record: record });

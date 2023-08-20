@@ -102,7 +102,7 @@ router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP mus
     }
 })
 
-router.post("/edit", ensureConsumerAuthenticated, body('name').isLength({ min: 1 }).withMessage("Name must be atleast 3 characters long"), body('mobileNo').isLength({ min: 10 }).withMessage("Mobile number must be 10 digits long"), body('city').isLength({ min: 3 }).withMessage("City must be atleast 3 charcters long"), body('district').isLength({ min: 3 }).withMessage("District must be three charcters long"),
+router.post("/edit", ensureConsumerAuthenticated, body('name').isLength({ min: 3 }).withMessage("Name must be atleast 3 characters long"), body('mobileNo').isLength({ min: 10 }).withMessage("Mobile number must be 10 digits long"), body('city').isLength({ min: 3 }).withMessage("City must be atleast 3 charcters long"), body('district').isLength({ min: 3 }).withMessage("District must be three charcters long"),
     async (req, res) => {
 
         try {
