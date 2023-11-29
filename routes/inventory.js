@@ -72,7 +72,7 @@ router.get("/", ensureCrafterAuthenticated, async (req, res) => {
         return res.status(200).json({ status: "success", inventory: inventory });
     } catch (err) {
         console.error(err.message);
-        return res.status(500).send({ msg: "Internal Server Error" });
+        return res.status(500).send({ status:"fail",msg: "Internal Server Error" });
     }
 });
 
@@ -104,13 +104,13 @@ router.post("/", ensureCrafterAuthenticated, upload.single("imgFile"), body("nam
     // Check for MulterError
     if (req.fileValidationError instanceof multer.MulterError) {
         if (req.fileValidationError.code === 'LIMIT_FILE_SIZE') {
-            return res.status(422).json({ msg: 'File size exceeded' });
+            return res.status(422).json({ status: "fail", msg: 'File size exceeded' });
         }
         // Handle other multer errors if needed
-        return res.status(422).json({ msg: 'File upload error' });
+        return res.status(422).json({ status: "fail", msg: 'File upload error' });
     } else if (req.fileValidationError) {
         // Handle other validation errors if needed
-        return res.status(422).json({ msg: 'Validation error' });
+        return res.status(422).json({ status: "fail", msg: 'Validation error' });
     }
     try {
         const errors = validationResult(req);
@@ -118,7 +118,7 @@ router.post("/", ensureCrafterAuthenticated, upload.single("imgFile"), body("nam
             if (req.file != undefined) {
                 await delete_on_err(req.file.filename);
             }
-            return res.status(422).json({ msg: errors.array()[0].msg });
+            return res.status(422).json({ status: "fail", msg: errors.array()[0].msg });
         }
         const { name, quantity, price, description } = req.body;
         const inventory = await Inventory.create({

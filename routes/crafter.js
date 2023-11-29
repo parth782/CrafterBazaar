@@ -53,12 +53,12 @@ router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(422).json({ errors: errors.array()[0].msg });
+                return res.status(422).json({ status:"fail",msg: errors.array()[0].msg });
             }
             const { name, mobileNo, city, district, bloodGroup } = req.body;
             const record = await Crafter.findOne({ raw: true, where: { mobileNo: mobileNo, id: { [Op.ne]: req.user.id } } });
             if (record) {
-                return res.status(400).json({ errors: [{ msg: "Mobile Number already exists" }] });
+                return res.status(400).json({ status:"fail",msg:"Mobile Number already exists"});
             }
             await Crafter.update({
                 name: name,
