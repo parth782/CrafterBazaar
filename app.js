@@ -51,12 +51,12 @@ app.listen(process.env.PORT || 5000, async (err) => {
     }
     try {
         await conn.authenticate();
-        await Crafter.sync({ force: true });
-        await Inventory.sync({ force: true });
-        await Consumer.sync({ force: true });
-        await Order.sync({ force: true });
-        await Cart.sync({ force: true });
-        await Panel.sync({ force: true });
+        // await Crafter.sync({ force: true });
+        // await Inventory.sync({ force: true });
+        // await Consumer.sync({ force: true });
+        // await Order.sync({ force: true });
+        // await Cart.sync({ force: true });
+        // await Panel.sync({ force: true });
 
         const record = await Panel.findOne({ where: { id: 1 } });
         if (!record) {

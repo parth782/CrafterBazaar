@@ -84,6 +84,7 @@ router.get("/edit", ensureCrafterAuthenticated, async (req, res) => {
     try {
       
         const record = await Crafter.findOne({ raw: true, where: { id: req.user.id } });
+        console.log(req.user.id);
 
         return res.status(200).json({ status: "success", record: record });
     } catch (err) {
