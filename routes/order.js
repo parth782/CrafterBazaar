@@ -6,35 +6,33 @@ const Consumer = require('../models/Consumer');
 const Crafter = require('../models/Crafter');
 const { Sequelize } = require("sequelize");
 const Cart = require("../models/Cart");
+const Inventory = require("../models/Inventory");
 
 // FOR PLACING AN ORDER
 router.post('/', ensureConsumerAuthenticated, async (req, res) => {
     try {
-        const item=await Cart.findAll({raw:true,attributes:{include:['productId','quantity']},where:{consumerId:req.user.id}});
-        if(item.length==0){
-            return res.status(200).json({ status: "fail", msg: "Cart is Empty" });
+        const { items } = req.body;
+        let total = 0;
+        items.forEach(async (item, index) => {
+            const inv = await Inventory.findOne({ where: { id: item.id } });
+            total += inv.price;
+        })
+        const user = await Consumer.findOne({ where: { id: req.user.id } });
+        if (user.money < total) {
+            return res.status(400).json({ status: "error", msg: "Not Enough Money" });
         }
-        const total = await Cart.sum('totalPrice', { where: { consumerId: req.user.id } });
-        
-        
-        const consumer = await Consumer.findOne({ raw: true, where: { id: req.user.id } });
-        if (consumer.money < total) {
-            return res.status(200).json({ status: "fail", msg: "Not Enough Money" });
-        }
-        const order = await Order.create({
-            total: total,
-            products: JSON.stringify(item),
-            consumerId: req.user.id,
-        });
-        await order.save();
-        await Consumer.update({ money: Sequelize.literal(`money-${total}`) }, { where: { id: req.user.id } });
-        await Crafter.update({ money: Sequelize.literal(`money+${total}`) }, { where: { id: inv.crafterId } });
-        await Order.update({ status: "paid" }, { where: { id: order.id } });
-        await Cart.destroy({ where: { consumerId: req.user.id } });
-        return res.status(200).json({ status: "success", msg: "Order Placed Successfully" });
+        await Order.create({ consumerId: req.user.id, products: items, total: total });
+
+        items.forEach(async (item, index) => {
+            await Consumer.update({ money: Sequelize.literal(`money-${item.price}`) }, { where: { id: req.user.id } });
+            await Crafter.update({ money: Sequelize.literal(`money+${item.price}`) }, { where: { id: item.crafter.id } });
+
+        })
+        res.status(200).json({ status: "success", msg: "Order Placed Successfully" });
 
 
     } catch (err) {
+
         console.log(err);
         return res.status(500).json({ msg: "Some Error Occured" });
     }
