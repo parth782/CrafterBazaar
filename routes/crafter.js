@@ -3,8 +3,9 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const { ensureCrafterAuthenticated } = require("../middleware/auth");
-const twilio = require('twilio')
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const bycrypt = require("bcryptjs");
+// const twilio = require('twilio')
+// const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const Crafter = require('../models/Crafter');
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
@@ -53,12 +54,12 @@ router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(422).json({ status:"fail",msg: errors.array()[0].msg });
+                return res.status(422).json({ status: "fail", msg: errors.array()[0].msg });
             }
             const { name, mobileNo, city, district, bloodGroup } = req.body;
             const record = await Crafter.findOne({ raw: true, where: { mobileNo: mobileNo, id: { [Op.ne]: req.user.id } } });
             if (record) {
-                return res.status(400).json({ status:"fail",msg:"Mobile Number already exists"});
+                return res.status(400).json({ status: "fail", msg: "Mobile Number already exists" });
             }
             await Crafter.update({
                 name: name,
@@ -82,7 +83,7 @@ router.post("/edit", ensureCrafterAuthenticated, body('name').isLength({ min: 1 
 //FETCHING DATA FOR EDIT 
 router.get("/edit", ensureCrafterAuthenticated, async (req, res) => {
     try {
-      
+
         const record = await Crafter.findOne({ raw: true, where: { id: req.user.id } });
         console.log(req.user.id);
 
@@ -102,62 +103,109 @@ router.post('/login', body("mobileNo").isLength({ min: 10 }).withMessage("Mobile
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array()[0].msg });
         }
-        const status = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
-            .verifications
-            .create({ to: '+91' + req.body.mobileNo, channel: 'sms' })
-            .then((verification) => {
-                res.status(200).json({ status: "success", success: "OTP Sent Successfully" });
-                return;
-            });
-
-        return;
+        const { email, password } = req.body;
+        const crafter = await Crafter.findOne({ raw: true, where: { email: email } });
+        if (!crafter) {
+            return res.status(400).json({ status: "Error", msg: "Invalid Email" })
+        }
+        else {
+            const check = await bycrypt.compare(password, crafter.password);
+            if (!check) {
+                return res.status(400).json({ status: "Error", msg: "Invalid Password" });
+            }
+            else {
+                const payload = {
+                    role: "crafter",
+                    id: crafter.id,
+                    isUpdate: crafter.isUpdate
+                };
+                const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 });
+                return res.status(200).json({ status: "success", token: token, role: "crafter", isUpdate: crafter.isUpdate });
+            }
+        }
     } catch (err) {
         console.error(err.message);
         return res.status(500).send("Internal Server Error");
     }
 });
 
-// FOR VERIFICTION OF OTP
-router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP must be of length 6"), body("mobileNo").isLength({ min: 10 }).withMessage("Mobile No must be of length 10"), async (req, res) => {
+router.post("/register", body("email").isEmail().withMessage("Please Enter Valid Email"), body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 charaters long"), async (req, res) => {
 
     try {
+        const { email, password } = req.body;
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array()[0].msg });
         }
-        const temp = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
-            .verificationChecks
-            .create({ to: '+91' + req.body.mobileNo, code: req.body.otp });
-
-
-        if (temp.status === "approved") {
-            var crafter = await Crafter.findOne({ raw: true, where: { mobileNo: req.body.mobileNo } });
-            if (!crafter) {
-                var crafter = await Crafter.create({
-                    mobileNo: req.body.mobileNo
-                });
-                await crafter.save();
-            }
-
-            const payload = {
-                mobileNo: req.body.mobileNo,
-                role: "crafter",
-                id: crafter.id,
-                isUpdate: crafter.isUpdate
-            };
-            jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
-                if (err) throw err;
-                return res.status(200).json({ status: "success", token: token, role: "crafter", isUpdate: crafter.isUpdate });
-            });
+        const record = await Crafter.findOne({ raw: true, where: { email: email } });
+        if (record) {
+            return res.status(400).json({ status: "Error", msg: "Email already Exists" });
         }
-        else {
-            return res.status(400).json({ errors: [{ msg: "Invalid OTP" }] });
-        }
-    } catch (err) {
+        const salt = await bycrypt.genSalt(10);
+        const hash = await bycrypt.hash(password, salt);
+        const crafter = await Crafter.create({
+            email: email,
+            password: hash
+        });
+        await crafter.save();
+        const payload = {
+            role: "crafter",
+            id: crafter.id,
+            isUpdate: crafter.isUpdate
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 });
+        return res.status(200).json({ status: "success", token: token, role: "crafter", isUpdate: crafter.isUpdate });
+
+
+    }
+    catch (err) {
         console.error(err.message);
-        return res.status(500).send("Internal Server Error");
+        res.status(500).json({ status: "Error", msg: "Internal Server Error" });
+
     }
 })
+
+// FOR VERIFICTION OF OTP
+// router.post("/otp-verify", body("otp").isLength({ min: 6 }).withMessage("OTP must be of length 6"), body("mobileNo").isLength({ min: 10 }).withMessage("Mobile No must be of length 10"), async (req, res) => {
+
+//     try {
+//         const errors = validationResult(req);
+//         if (!errors.isEmpty()) {
+//             return res.status(422).json({ errors: errors.array()[0].msg });
+//         }
+//         const temp = await client.verify.services(process.env.TWILIO_VERIFICATION_SID)
+//             .verificationChecks
+//             .create({ to: '+91' + req.body.mobileNo, code: req.body.otp });
+
+
+//         if (temp.status === "approved") {
+//             var crafter = await Crafter.findOne({ raw: true, where: { mobileNo: req.body.mobileNo } });
+//             if (!crafter) {
+//                 var crafter = await Crafter.create({
+//                     mobileNo: req.body.mobileNo
+//                 });
+//                 await crafter.save();
+//             }
+
+//             const payload = {
+//                 mobileNo: req.body.mobileNo,
+//                 role: "crafter",
+//                 id: crafter.id,
+//                 isUpdate: crafter.isUpdate
+//             };
+//             jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 360000 }, (err, token) => {
+//                 if (err) throw err;
+//                 return res.status(200).json({ status: "success", token: token, role: "crafter", isUpdate: crafter.isUpdate });
+//             });
+//         }
+//         else {
+//             return res.status(400).json({ errors: [{ msg: "Invalid OTP" }] });
+//         }
+//     } catch (err) {
+//         console.error(err.message);
+//         return res.status(500).send("Internal Server Error");
+//     }
+// })
 
 // FOR IMAGE UPLOADING OF CRAFTER
 router.post("/img", ensureCrafterAuthenticated, async (req, res) => {

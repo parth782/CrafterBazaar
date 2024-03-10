@@ -8,11 +8,22 @@ const Consumer = conn.define("Consumer", {
     },
     name: {
         type: DataTypes.STRING,
+        trim: true,
 
+    },
+    email:{
+        type:DataTypes.STRING,
+        unique:true,
+        trim:true,
+    },
+    password:{
+        type:DataTypes.STRING,
+        trim:true
     },
     mobileNo: {
         type: DataTypes.BIGINT,
-        unique: true
+        trim: true,
+       
     },
     city: {
         type: DataTypes.STRING,

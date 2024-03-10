@@ -34,6 +34,15 @@ const Crafter=conn.define("Crafter",{
     imgFile:{
         type:DataTypes.STRING,
         allownull:true
+    },
+    email:{
+        type:DataTypes.STRING,
+        unique:true,
+        trim:true,
+    },
+    password:{
+        type:DataTypes.STRING,
+        trim:true
     }
 
 
