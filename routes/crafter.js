@@ -95,7 +95,7 @@ router.get("/edit", ensureCrafterAuthenticated, async (req, res) => {
 })
 
 // FOR CRAFTER LOGIN VIA OTP
-router.post('/login', body("mobileNo").isLength({ min: 10 }).withMessage("Mobile No must be of length 10"), async (req, res) => {
+router.post('/login',body("email").isEmail().withMessage("Please Enter Valid Email"), body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 charaters long"), async (req, res) => {
 
     try {
 

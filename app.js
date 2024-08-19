@@ -60,6 +60,7 @@ app.listen(process.env.PORT || 5000, async (err) => {
 
         const record = await Panel.findOne({ where: { id: 1 } });
         if (!record) {
+            
             const seeder = new Panel({
                 name: 'Crafters Bazaar',
                 email: 'admin@crafterbazaar.com',

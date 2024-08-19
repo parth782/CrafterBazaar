@@ -42,7 +42,7 @@ var upload = multer({
 // DELETING FILES ON ERROR
 async function delete_on_err(path) {
     try {
-        fs.unlink('./static/uploads/products' + path, (err) => {
+        fs.unlink('./static/uploads/products/' + path, (err) => {
             if (err) console.log(err);
         });
         return true;
